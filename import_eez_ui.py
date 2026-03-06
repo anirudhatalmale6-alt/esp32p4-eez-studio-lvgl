@@ -53,8 +53,8 @@ def fix_includes(filepath):
     # Fix <lvgl/lvgl.h> -> "lvgl.h"
     content = re.sub(r'#include\s*<lvgl/lvgl\.h>', '#include "lvgl.h"', content)
 
-    # Fix <lvgl/src/lvgl_private.h> -> "lvgl.h" (already included via lvgl.h in v9)
-    content = re.sub(r'#include\s*<lvgl/src/lvgl_private\.h>', '// lvgl_private.h included via lvgl.h', content)
+    # Fix <lvgl/src/lvgl_private.h> -> "src/lvgl_private.h"
+    content = re.sub(r'#include\s*<lvgl/src/lvgl_private\.h>', '#include "src/lvgl_private.h"', content)
 
     if content != original:
         with open(filepath, 'w', encoding='utf-8') as f:

@@ -8,24 +8,15 @@
 extern "C" {
 #endif
 
-// ============================================================================
-// EEZ Studio will generate enum declarations, flow global variables,
-// and native variable getter/setter prototypes here.
-// ============================================================================
+// enum declarations
 
-// Example of what EEZ Studio generates:
-//
-// enum FlowGlobalVariables {
-//     FLOW_GLOBAL_VARIABLE_MY_VAR = 0,
-// };
-//
-// extern const char *get_var_my_string();
-// extern void set_var_my_string(const char *value);
-// extern int32_t get_var_my_int();
-// extern void set_var_my_int(int32_t value);
+// Flow global variables
 
-void init_vars();
-void tick_vars();
+enum FlowGlobalVariables {
+    FLOW_GLOBAL_VARIABLE_NONE
+};
+
+// Native global variables
 
 #ifdef __cplusplus
 }

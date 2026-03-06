@@ -16,8 +16,8 @@
 #include "driver/i2c_master.h"
 #include "esp_lcd_panel_vendor.h"
 
-// EEZ Studio generated UI
-#include "eez_ui/ui.h"
+// EEZ Studio generated UI (from main/eez_ui/)
+#include "ui.h"
 
 static const char *TAG = "jd9365_app";
 

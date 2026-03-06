@@ -1,3 +1,6 @@
 #include "styles.h"
+#include "images.h"
+#include "fonts.h"
 
-// EEZ Studio will generate style definitions here.
+#include "ui.h"
+#include "screens.h"

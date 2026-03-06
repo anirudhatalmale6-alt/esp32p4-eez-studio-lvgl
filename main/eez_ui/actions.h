@@ -7,9 +7,6 @@
 extern "C" {
 #endif
 
-// User actions declared by EEZ Studio will appear here.
-// Example: extern void action_my_button_click(lv_event_t * e);
-
 #ifdef __cplusplus
 }
 #endif

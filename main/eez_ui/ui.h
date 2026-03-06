@@ -3,16 +3,13 @@
 
 #include "lvgl.h"
 
-// ============================================================================
-// PLACEHOLDER header — will be replaced by EEZ Studio generated ui.h.
-//
-// The real EEZ-generated ui.h will include <eez/flow/lvgl_api.h> and
-// declare the assets[] array. This placeholder uses direct LVGL only.
-// ============================================================================
+#include "eez-flow.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const uint8_t assets[516];
 
 void ui_init();
 void ui_tick();

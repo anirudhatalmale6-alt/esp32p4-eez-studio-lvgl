@@ -7,10 +7,6 @@
 extern "C" {
 #endif
 
-// EEZ Studio will generate image declarations here.
-// Example:
-//   extern const lv_img_dsc_t img_my_logo;
-
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
 typedef struct _ext_img_desc_t {

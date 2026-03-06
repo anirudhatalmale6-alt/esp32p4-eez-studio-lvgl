@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-// EEZ Studio will generate style declarations here.
-
 #ifdef __cplusplus
 }
 #endif
