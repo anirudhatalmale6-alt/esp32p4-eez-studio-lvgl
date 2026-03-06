@@ -9,7 +9,6 @@ objects_t objects;
 lv_obj_t *tick_value_change_obj;
 
 void create_screen_main() {
-    void *flowState = getFlowState(0, 0);
     lv_obj_t *obj = lv_obj_create(0);
     objects.main = obj;
     lv_obj_set_pos(obj, 0, 0);

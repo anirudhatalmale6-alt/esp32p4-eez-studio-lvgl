@@ -3,18 +3,12 @@
 
 #include "lvgl.h"
 
-#if !defined(EEZ_FOR_LVGL)
-#warning "EEZ_FOR_LVGL is not enabled"
-#define EEZ_FOR_LVGL
-#endif
-
-#if defined(EEZ_FOR_LVGL)
-#include <eez/flow/lvgl_api.h>
-#endif
-
-#if !defined(EEZ_FOR_LVGL)
-#include "screens.h"
-#endif
+// ============================================================================
+// PLACEHOLDER header — will be replaced by EEZ Studio generated ui.h.
+//
+// The real EEZ-generated ui.h will include <eez/flow/lvgl_api.h> and
+// declare the assets[] array. This placeholder uses direct LVGL only.
+// ============================================================================
 
 #ifdef __cplusplus
 extern "C" {
