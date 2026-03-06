@@ -1,0 +1,9 @@
+build/
+managed_components/
+dependencies.lock
+sdkconfig.old
+__pycache__/
+*.pyc
+.cache/
+# EEZ UI backups (local only)
+main/eez_ui_backup_*/
