@@ -26,9 +26,11 @@ Note: actions.cpp and vars.cpp contain YOUR custom logic.
 
 import os
 import sys
+import stat
 import shutil
 import glob
 import re
+import time
 from datetime import datetime
 
 # Project paths
@@ -38,6 +40,30 @@ BACKUP_DIR = os.path.join(SCRIPT_DIR, "main", "eez_ui_backup")
 
 # Files that contain user logic (preserve these)
 USER_FILES = {"actions.cpp", "vars.cpp"}
+
+def _on_rm_error(func, path, exc_info):
+    """Handle rmtree errors on Windows (read-only files, locked files)."""
+    # Clear read-only flag and retry
+    try:
+        os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+        func(path)
+    except Exception:
+        # File might be locked by IDE — wait briefly and retry once
+        time.sleep(0.5)
+        try:
+            os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+            func(path)
+        except Exception:
+            print(f"  Warning: Could not remove {path} — file may be locked by another program")
+
+
+def safe_rmtree(path):
+    """Remove directory tree, handling Windows permission issues."""
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=lambda fn, p, ex: _on_rm_error(fn, p, None))
+    else:
+        shutil.rmtree(path, onerror=_on_rm_error)
+
 
 def fix_includes(filepath):
     """Fix EEZ Studio include paths for ESP-IDF compatibility.
@@ -150,7 +176,7 @@ def main():
     # Step 3: Clear and copy new files
     print(f"[2/5] Importing EEZ Studio files...")
     if os.path.exists(EEZ_UI_DIR):
-        shutil.rmtree(EEZ_UI_DIR)
+        safe_rmtree(EEZ_UI_DIR)
     os.makedirs(EEZ_UI_DIR, exist_ok=True)
 
     imported = []
