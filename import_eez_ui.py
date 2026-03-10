@@ -62,6 +62,45 @@ def fix_includes(filepath):
         return True
     return False
 
+def fix_flow_engine(filepath):
+    """Fix EEZ flow engine bug: memcpy from integer user_data/param pointers.
+
+    EEZ-generated event handlers set e->user_data to small integer values
+    (e.g. (void*)1 for digit "1"). The flow engine then tries to memcpy
+    from this address, causing a crash. This fix adds a pointer validity
+    check before the memcpy.
+    """
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+
+    original = content
+
+    # Fix user_data memcpy
+    content = content.replace(
+        'if (event->user_data) {\n'
+        '        g_lastLVGLEvent.user_data = &g_lastLVGLEventUserDataBuffer;\n'
+        '        memcpy(&g_lastLVGLEventUserDataBuffer, event->user_data, sizeof(g_lastLVGLEventUserDataBuffer));',
+        'if (event->user_data && (uintptr_t)event->user_data > 0x1000u) {\n'
+        '        g_lastLVGLEvent.user_data = &g_lastLVGLEventUserDataBuffer;\n'
+        '        memcpy(&g_lastLVGLEventUserDataBuffer, event->user_data, sizeof(g_lastLVGLEventUserDataBuffer));'
+    )
+
+    # Fix param memcpy
+    content = content.replace(
+        'if (event->param) {\n'
+        '        g_lastLVGLEvent.param = &g_lastLVGLEventParamBuffer;\n'
+        '        memcpy(&g_lastLVGLEventParamBuffer, event->param, sizeof(g_lastLVGLEventParamBuffer));',
+        'if (event->param && (uintptr_t)event->param > 0x1000u) {\n'
+        '        g_lastLVGLEvent.param = &g_lastLVGLEventParamBuffer;\n'
+        '        memcpy(&g_lastLVGLEventParamBuffer, event->param, sizeof(g_lastLVGLEventParamBuffer));'
+    )
+
+    if content != original:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return True
+    return False
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python import_eez_ui.py <eez_export_directory>")
@@ -94,10 +133,10 @@ def main():
     if os.path.exists(EEZ_UI_DIR):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_path = f"{BACKUP_DIR}_{timestamp}"
-        print(f"[1/4] Backing up current UI to: {os.path.basename(backup_path)}")
+        print(f"[1/5] Backing up current UI to: {os.path.basename(backup_path)}")
         shutil.copytree(EEZ_UI_DIR, backup_path)
     else:
-        print("[1/4] No existing UI to back up")
+        print("[1/5] No existing UI to back up")
 
     # Step 2: Preserve user files
     preserved = {}
@@ -109,7 +148,7 @@ def main():
             print(f"       Preserving user file: {user_file}")
 
     # Step 3: Clear and copy new files
-    print(f"[2/4] Importing EEZ Studio files...")
+    print(f"[2/5] Importing EEZ Studio files...")
     if os.path.exists(EEZ_UI_DIR):
         shutil.rmtree(EEZ_UI_DIR)
     os.makedirs(EEZ_UI_DIR, exist_ok=True)
@@ -128,7 +167,7 @@ def main():
     print(f"       Imported {len(imported)} items")
 
     # Step 4: Restore user files (if not overwritten by EEZ export)
-    print(f"[3/4] Restoring user implementation files...")
+    print(f"[3/5] Restoring user implementation files...")
     for user_file, content in preserved.items():
         user_path = os.path.join(EEZ_UI_DIR, user_file)
         # Only restore if EEZ didn't generate this file
@@ -140,7 +179,7 @@ def main():
             print(f"       EEZ generated {user_file} — your version is in backup")
 
     # Step 5: Fix includes
-    print(f"[4/4] Fixing include paths for ESP-IDF...")
+    print(f"[4/5] Fixing include paths for ESP-IDF...")
     fixed_count = 0
     for ext in ("*.h", "*.c", "*.cpp"):
         for filepath in glob.glob(os.path.join(EEZ_UI_DIR, "**", ext), recursive=True):
@@ -150,6 +189,17 @@ def main():
 
     if fixed_count == 0:
         print("       No include fixes needed")
+
+    # Step 6: Fix flow engine bug (memcpy from integer user_data)
+    print(f"[5/5] Patching EEZ flow engine for ESP32...")
+    flow_file = os.path.join(EEZ_UI_DIR, "eez-flow.cpp")
+    if os.path.exists(flow_file):
+        if fix_flow_engine(flow_file):
+            print("       Patched: eez-flow.cpp (user_data pointer fix)")
+        else:
+            print("       No flow engine patches needed")
+    else:
+        print("       No eez-flow.cpp found (skipped)")
 
     print()
     print("=" * 60)

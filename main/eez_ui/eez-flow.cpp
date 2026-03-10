@@ -6799,11 +6799,13 @@ EM_PORT_API(void) flowPropagateValueLVGLEvent(void *flowState, unsigned componen
         )
     );
     g_lastLVGLEvent = *event;
-    if (event->user_data) {
+    // EEZ-generated event handlers may set e->user_data to small integer values
+    // (e.g. (void*)1 for digit "1"). Only deep-copy if it looks like a valid pointer.
+    if (event->user_data && (uintptr_t)event->user_data > 0x1000u) {
         g_lastLVGLEvent.user_data = &g_lastLVGLEventUserDataBuffer;
         memcpy(&g_lastLVGLEventUserDataBuffer, event->user_data, sizeof(g_lastLVGLEventUserDataBuffer));
     }
-    if (event->param) {
+    if (event->param && (uintptr_t)event->param > 0x1000u) {
         g_lastLVGLEvent.param = &g_lastLVGLEventParamBuffer;
         memcpy(&g_lastLVGLEventParamBuffer, event->param, sizeof(g_lastLVGLEventParamBuffer));
     }
