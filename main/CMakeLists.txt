@@ -19,20 +19,29 @@ file(GLOB_RECURSE EEZ_UI_SOURCES
     "eez_ui/*.cpp"
 )
 
+# Collect WAV files for embedding
+file(GLOB AUDIO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/audio/*.wav")
+
 # Register the main component with ESP-IDF
 idf_component_register(
     SRCS
         "main.c"                  # Main application (display, touch, app_main)
+        "beep.c"                  # Audio beep module (I2S + MAX98357A)
+        "actions_impl.c"          # EEZ user action implementations (beep triggers)
         ${EEZ_UI_SOURCES}         # All EEZ Studio generated UI files (inc. eez-flow.cpp)
 
     INCLUDE_DIRS
         "."                       # Current directory (for includes from main.c)
         "eez_ui"                  # EEZ generated UI headers (ui.h, screens.h, eez-flow.h)
 
+    EMBED_FILES
+        ${AUDIO_FILES}            # WAV files embedded in flash (beep1.wav, beep2.wav)
+
     PRIV_REQUIRES
         lvgl                      # LVGL graphics library
         esp_lcd                   # ESP LCD driver framework
         driver                    # ESP-IDF hardware drivers
+        esp_driver_i2s            # I2S driver for MAX98357A audio
         spi_flash                 # SPI flash access
 )
 
