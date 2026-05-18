@@ -116,6 +116,24 @@ static esp_err_t i2s_init(uint32_t sample_rate)
     return ESP_OK;
 }
 
+static void apply_fade_out(uint8_t *buf, size_t bytes, uint32_t fade_samples, uint32_t total_remaining_samples)
+{
+    int16_t *samples = (int16_t *)buf;
+    size_t n = bytes / 2;
+    for (size_t i = 0; i < n; i++) {
+        uint32_t sample_pos = total_remaining_samples - (n - i);
+        if (sample_pos < fade_samples) {
+            continue;
+        }
+        uint32_t from_end = total_remaining_samples - sample_pos - 1;
+        if (from_end < fade_samples) {
+            int32_t s = samples[i];
+            s = s * (int32_t)from_end / (int32_t)fade_samples;
+            samples[i] = (int16_t)s;
+        }
+    }
+}
+
 static void play_wav(const wav_info_t *wav)
 {
     if (!i2s_running) {
@@ -130,35 +148,52 @@ static void play_wav(const wav_info_t *wav)
     uint8_t vol = volume_level;
     uint32_t scale = (uint32_t)vol * 256 / 100;
 
+    uint32_t total_samples = wav->data_size / 2;
+    uint32_t fade_samples = wav->sample_rate * 5 / 1000;
+    uint32_t samples_written = 0;
+
     while (remaining > 0) {
         size_t to_write = (remaining < chunk_size) ? remaining : chunk_size;
         size_t bytes_written = 0;
-        const uint8_t *write_ptr;
 
-        if (vol == 0) {
-            memset(scaled_buf, 0, to_write);
-            write_ptr = scaled_buf;
-        } else if (vol < 100 && wav->bits_per_sample == 16) {
-            const int16_t *in  = (const int16_t *)ptr;
-            int16_t       *out = (int16_t *)scaled_buf;
-            size_t n = to_write / 2;
-            for (size_t i = 0; i < n; i++)
-                out[i] = (int16_t)(((int32_t)in[i] * scale) >> 8);
-            write_ptr = scaled_buf;
-        } else {
-            write_ptr = ptr;
+        memcpy(scaled_buf, ptr, to_write);
+
+        if (wav->bits_per_sample == 16) {
+            if (vol == 0) {
+                memset(scaled_buf, 0, to_write);
+            } else {
+                int16_t *out = (int16_t *)scaled_buf;
+                size_t n = to_write / 2;
+                if (vol < 100) {
+                    for (size_t i = 0; i < n; i++)
+                        out[i] = (int16_t)(((int32_t)out[i] * scale) >> 8);
+                }
+                uint32_t chunk_end_sample = samples_written + n;
+                if (chunk_end_sample > total_samples - fade_samples) {
+                    for (size_t i = 0; i < n; i++) {
+                        uint32_t from_end = total_samples - (samples_written + i) - 1;
+                        if (from_end < fade_samples) {
+                            out[i] = (int16_t)((int32_t)out[i] * (int32_t)from_end / (int32_t)fade_samples);
+                        }
+                    }
+                }
+                samples_written += n;
+            }
         }
 
-        i2s_channel_write(tx_handle, write_ptr, to_write, &bytes_written, pdMS_TO_TICKS(500));
+        i2s_channel_write(tx_handle, scaled_buf, to_write, &bytes_written, pdMS_TO_TICKS(500));
         ptr += bytes_written;
         remaining -= bytes_written;
     }
 
-    // Flush with silence to avoid residual noise
+    // Flush DMA buffers with silence (8KB = enough for default 6 x 240 DMA descriptors)
     memset(scaled_buf, 0, chunk_size);
     size_t written;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 8; i++)
         i2s_channel_write(tx_handle, scaled_buf, chunk_size, &written, pdMS_TO_TICKS(100));
+
+    // Small delay to let the last DMA transfer complete before disabling
+    vTaskDelay(pdMS_TO_TICKS(20));
 
     i2s_channel_disable(tx_handle);
     i2s_running = false;
