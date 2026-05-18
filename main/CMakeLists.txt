@@ -28,6 +28,7 @@ idf_component_register(
         "main.c"                  # Main application (display, touch, app_main)
         "beep.c"                  # Audio beep module (I2S + MAX98357A)
         "actions_impl.c"          # EEZ user action implementations (beep triggers)
+        "vars_impl.c"             # EEZ native variable implementations (volume)
         ${EEZ_UI_SOURCES}         # All EEZ Studio generated UI files (inc. eez-flow.cpp)
 
     INCLUDE_DIRS
@@ -43,6 +44,7 @@ idf_component_register(
         driver                    # ESP-IDF hardware drivers
         esp_driver_i2s            # I2S driver for MAX98357A audio
         spi_flash                 # SPI flash access
+        nvs_flash                 # Non-volatile storage (volume persistence)
 )
 
 # Suppress warnings in EEZ generated code (auto-generated, not user-maintained)

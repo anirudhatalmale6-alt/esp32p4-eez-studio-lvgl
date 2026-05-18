@@ -29,6 +29,7 @@
 // EEZ Studio generated UI (from main/eez_ui/)
 #include "ui.h"
 #include "beep.h"
+#include "nvs_flash.h"
 
 static const char *TAG = "jd9365_app";
 
@@ -539,6 +540,13 @@ void app_main(void)
 {
     ESP_LOGI(TAG, "ESP32-P4 + EEZ Studio LVGL Flow Demo");
     ESP_LOGI(TAG, "Display: JD9365 800x1280, 60Hz, MIPI DSI 2-lane");
+
+    // Initialize NVS (non-volatile storage for settings like volume)
+    esp_err_t nvs_ret = nvs_flash_init();
+    if (nvs_ret == ESP_ERR_NVS_NO_FREE_PAGES || nvs_ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        nvs_flash_erase();
+        nvs_flash_init();
+    }
 
     bsp_display_start();
 

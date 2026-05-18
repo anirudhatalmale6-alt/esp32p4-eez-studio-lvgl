@@ -6,6 +6,8 @@
 #include "driver/i2s_std.h"
 #include "esp_log.h"
 #include "esp_check.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 
 static const char *TAG = "beep";
 
@@ -31,6 +33,30 @@ static QueueHandle_t beep_queue = NULL;
 static volatile uint8_t volume_level = 80;
 static wav_info_t wav_sounds[2];
 static bool i2s_running = false;
+
+#define NVS_NAMESPACE "beep"
+#define NVS_KEY_VOLUME "volume"
+
+static void nvs_save_volume(uint8_t vol)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_set_u8(h, NVS_KEY_VOLUME, vol);
+        nvs_commit(h);
+        nvs_close(h);
+    }
+}
+
+static uint8_t nvs_load_volume(uint8_t default_vol)
+{
+    nvs_handle_t h;
+    uint8_t val = default_vol;
+    if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &h) == ESP_OK) {
+        nvs_get_u8(h, NVS_KEY_VOLUME, &val);
+        nvs_close(h);
+    }
+    return val;
+}
 
 static esp_err_t wav_parse(const uint8_t *buf, size_t buf_size, wav_info_t *info)
 {
@@ -178,6 +204,8 @@ esp_err_t beep_init(void)
     ret = i2s_init(wav_sounds[0].sample_rate);
     if (ret != ESP_OK) return ret;
 
+    volume_level = nvs_load_volume(80);
+
     beep_queue = xQueueCreate(4, sizeof(uint8_t));
     xTaskCreate(beep_task, "beep", 4096, NULL, 3, NULL);
 
@@ -196,6 +224,8 @@ void beep_set_volume(uint8_t level)
 {
     if (level > 100) level = 100;
     volume_level = level;
+    nvs_save_volume(level);
+    ESP_LOGI(TAG, "Volume: %d%% (saved to flash)", level);
 }
 
 uint8_t beep_get_volume(void)
