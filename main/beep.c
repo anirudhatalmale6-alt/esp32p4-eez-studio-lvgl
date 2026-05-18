@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/timers.h"
 #include "driver/i2s_std.h"
 #include "esp_log.h"
 #include "esp_check.h"
@@ -36,14 +37,28 @@ static bool i2s_running = false;
 
 #define NVS_NAMESPACE "beep"
 #define NVS_KEY_VOLUME "volume"
+#define NVS_SAVE_DELAY_MS 2000
 
-static void nvs_save_volume(uint8_t vol)
+static TimerHandle_t nvs_save_timer = NULL;
+static volatile uint8_t nvs_pending_volume = 0;
+
+static void nvs_save_timer_cb(TimerHandle_t timer)
 {
+    uint8_t vol = nvs_pending_volume;
     nvs_handle_t h;
     if (nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h) == ESP_OK) {
         nvs_set_u8(h, NVS_KEY_VOLUME, vol);
         nvs_commit(h);
         nvs_close(h);
+        ESP_LOGI(TAG, "Volume %d%% saved to flash", vol);
+    }
+}
+
+static void nvs_save_volume_deferred(uint8_t vol)
+{
+    nvs_pending_volume = vol;
+    if (nvs_save_timer) {
+        xTimerReset(nvs_save_timer, 0);
     }
 }
 
@@ -241,6 +256,9 @@ esp_err_t beep_init(void)
 
     volume_level = nvs_load_volume(80);
 
+    nvs_save_timer = xTimerCreate("nvs_vol", pdMS_TO_TICKS(NVS_SAVE_DELAY_MS),
+                                   pdFALSE, NULL, nvs_save_timer_cb);
+
     beep_queue = xQueueCreate(4, sizeof(uint8_t));
     xTaskCreate(beep_task, "beep", 4096, NULL, 3, NULL);
 
@@ -259,8 +277,7 @@ void beep_set_volume(uint8_t level)
 {
     if (level > 100) level = 100;
     volume_level = level;
-    nvs_save_volume(level);
-    ESP_LOGI(TAG, "Volume: %d%% (saved to flash)", level);
+    nvs_save_volume_deferred(level);
 }
 
 uint8_t beep_get_volume(void)
