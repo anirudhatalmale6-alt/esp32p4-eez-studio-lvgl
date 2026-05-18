@@ -5,6 +5,7 @@
 #include "freertos/queue.h"
 #include "driver/i2s_std.h"
 #include "esp_log.h"
+#include "esp_check.h"
 
 static const char *TAG = "beep";
 
