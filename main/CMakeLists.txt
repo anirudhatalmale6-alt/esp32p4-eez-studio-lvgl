@@ -27,8 +27,9 @@ idf_component_register(
     SRCS
         "main.c"                  # Main application (display, touch, app_main)
         "beep.c"                  # Audio beep module (I2S + MAX98357A)
-        "actions_impl.c"          # EEZ user action implementations (beep triggers)
-        "vars_impl.c"             # EEZ native variable implementations (volume)
+        "rtc_clock.c"             # RTC clock module (32.768 kHz XTAL + NVS)
+        "actions_impl.c"          # EEZ user action implementations
+        "vars_impl.c"             # EEZ native variable implementations
         ${EEZ_UI_SOURCES}         # All EEZ Studio generated UI files (inc. eez-flow.cpp)
 
     INCLUDE_DIRS

@@ -29,6 +29,7 @@
 // EEZ Studio generated UI (from main/eez_ui/)
 #include "ui.h"
 #include "beep.h"
+#include "rtc_clock.h"
 #include "nvs_flash.h"
 
 static const char *TAG = "jd9365_app";
@@ -562,6 +563,9 @@ void app_main(void)
     if (beep_ret != ESP_OK) {
         ESP_LOGE(TAG, "Beep init failed: %s", esp_err_to_name(beep_ret));
     }
+
+    // Initialize RTC clock (32.768 kHz XTAL + NVS persistence)
+    rtc_clock_init();
 
     // Start EEZ Flow tick task (processes flow engine, variable updates)
     xTaskCreate(eez_ui_tick_task, "eez_tick", 8192, NULL, 5, NULL);
