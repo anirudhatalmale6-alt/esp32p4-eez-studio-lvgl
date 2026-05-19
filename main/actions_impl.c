@@ -1,17 +1,6 @@
-// ============================================================================
-// EEZ Studio User Action Implementations
-// ============================================================================
-// Each user action defined in EEZ Studio generates a declaration in actions.h.
-// This file provides the implementations.
-//
-// User Actions to create in EEZ Studio:
-//   beep1      - play beep sound 1
-//   beep2      - play beep sound 2
-//   set_time   - apply rtc_hours + rtc_minutes to the RTC clock
-// ============================================================================
-
 #include "beep.h"
 #include "rtc_clock.h"
+#include "oven_timer.h"
 #include "lvgl.h"
 
 void action_beep1(lv_event_t *e) {
@@ -31,4 +20,24 @@ void action_set_time(lv_event_t *e) {
         (uint8_t)rtc_clock_get_minutes(),
         0
     );
+}
+
+void action_timer1_start(lv_event_t *e) {
+    (void)e;
+    oven_timer_start(0);
+}
+
+void action_timer1_stop(lv_event_t *e) {
+    (void)e;
+    oven_timer_stop(0);
+}
+
+void action_timer2_start(lv_event_t *e) {
+    (void)e;
+    oven_timer_start(1);
+}
+
+void action_timer2_stop(lv_event_t *e) {
+    (void)e;
+    oven_timer_stop(1);
 }

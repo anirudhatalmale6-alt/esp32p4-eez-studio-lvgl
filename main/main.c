@@ -30,6 +30,7 @@
 #include "ui.h"
 #include "beep.h"
 #include "rtc_clock.h"
+#include "oven_timer.h"
 #include "nvs_flash.h"
 
 static const char *TAG = "jd9365_app";
@@ -537,6 +538,12 @@ static void eez_ui_tick_task(void *arg)
     }
 }
 
+static void on_timer_expired(uint8_t timer_id)
+{
+    ESP_LOGI(TAG, "Oven timer %d expired — playing alert beep", timer_id + 1);
+    beep_play(BEEP_SOUND_1);
+}
+
 void app_main(void)
 {
     ESP_LOGI(TAG, "ESP32-P4 + EEZ Studio LVGL Flow Demo");
@@ -566,6 +573,8 @@ void app_main(void)
 
     // Initialize RTC clock (32.768 kHz XTAL + NVS persistence)
     rtc_clock_init();
+
+    oven_timer_init(on_timer_expired);
 
     // Start EEZ Flow tick task (processes flow engine, variable updates)
     xTaskCreate(eez_ui_tick_task, "eez_tick", 8192, NULL, 5, NULL);

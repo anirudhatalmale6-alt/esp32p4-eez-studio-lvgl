@@ -15,7 +15,7 @@ static const char *TAG = "rtc";
 #define NVS_KEY_EPOCH    "epoch"
 #define NVS_SAVE_INTERVAL_S 60
 
-static char time_str_buf[9];
+static char time_str_buf[12];
 static TimerHandle_t save_timer = NULL;
 
 static void nvs_save_epoch(void)
@@ -101,7 +101,10 @@ const char *rtc_clock_get_time_str(void)
 {
     struct tm t;
     get_localtime(&t);
-    snprintf(time_str_buf, sizeof(time_str_buf), "%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
+    int hour12 = t.tm_hour % 12;
+    if (hour12 == 0) hour12 = 12;
+    const char *ampm = (t.tm_hour < 12) ? "AM" : "PM";
+    snprintf(time_str_buf, sizeof(time_str_buf), "%d:%02d %s", hour12, t.tm_min, ampm);
     return time_str_buf;
 }
 
