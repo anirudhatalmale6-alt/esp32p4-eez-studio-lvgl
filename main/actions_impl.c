@@ -22,22 +22,22 @@ void action_set_time(lv_event_t *e) {
     );
 }
 
-void action_timer1_start(lv_event_t *e) {
+void action_toggle_time_format(lv_event_t *e) {
     (void)e;
-    oven_timer_start(0);
+    uint8_t fmt = rtc_clock_get_format();
+    rtc_clock_set_format(fmt == RTC_FORMAT_24H ? RTC_FORMAT_12H : RTC_FORMAT_24H);
 }
 
-void action_timer1_stop(lv_event_t *e) {
-    (void)e;
-    oven_timer_stop(0);
-}
+// --- Countdown timers ---
+void action_timer1_start(lv_event_t *e) { (void)e; oven_timer_start(0); }
+void action_timer1_stop(lv_event_t *e)  { (void)e; oven_timer_stop(0); }
+void action_timer2_start(lv_event_t *e) { (void)e; oven_timer_start(1); }
+void action_timer2_stop(lv_event_t *e)  { (void)e; oven_timer_stop(1); }
 
-void action_timer2_start(lv_event_t *e) {
-    (void)e;
-    oven_timer_start(1);
-}
+// --- Delayed start ---
+void action_delayed_start_enable(lv_event_t *e)  { (void)e; oven_delayed_start_enable(); }
+void action_delayed_start_disable(lv_event_t *e) { (void)e; oven_delayed_start_disable(); }
 
-void action_timer2_stop(lv_event_t *e) {
-    (void)e;
-    oven_timer_stop(1);
-}
+// --- Cooking time ---
+void action_cooking_start(lv_event_t *e) { (void)e; oven_cooking_start(); }
+void action_cooking_stop(lv_event_t *e)  { (void)e; oven_cooking_stop(); }

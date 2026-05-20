@@ -31,6 +31,7 @@
 #include "beep.h"
 #include "rtc_clock.h"
 #include "oven_timer.h"
+#include "prizer_bus.h"
 #include "nvs_flash.h"
 
 static const char *TAG = "jd9365_app";
@@ -538,10 +539,31 @@ static void eez_ui_tick_task(void *arg)
     }
 }
 
-static void on_timer_expired(uint8_t timer_id)
+static void on_oven_event(oven_event_t event)
 {
-    ESP_LOGI(TAG, "Oven timer %d expired — playing alert beep", timer_id + 1);
-    beep_play(BEEP_SOUND_1);
+    switch (event) {
+        case OVEN_EVENT_TIMER1_EXPIRED:
+            ESP_LOGI(TAG, "Timer 1 expired");
+            beep_play(BEEP_SOUND_1);
+            break;
+        case OVEN_EVENT_TIMER2_EXPIRED:
+            ESP_LOGI(TAG, "Timer 2 expired");
+            beep_play(BEEP_SOUND_1);
+            break;
+        case OVEN_EVENT_DELAYED_START:
+            ESP_LOGI(TAG, "Delayed start triggered");
+            beep_play(BEEP_SOUND_2);
+            break;
+        case OVEN_EVENT_COOKING_DONE:
+            ESP_LOGI(TAG, "Cooking time done");
+            beep_play(BEEP_SOUND_1);
+            break;
+    }
+}
+
+static void on_prizer_rx_cmd(const char *cmd, uint16_t data1, uint16_t data2)
+{
+    ESP_LOGD(TAG, "Prizer RX: cmd=%s d1=%u d2=%u", cmd, data1, data2);
 }
 
 void app_main(void)
@@ -574,7 +596,9 @@ void app_main(void)
     // Initialize RTC clock (32.768 kHz XTAL + NVS persistence)
     rtc_clock_init();
 
-    oven_timer_init(on_timer_expired);
+    oven_timer_init(on_oven_event);
+
+    prizer_bus_init(on_prizer_rx_cmd);
 
     // Start EEZ Flow tick task (processes flow engine, variable updates)
     xTaskCreate(eez_ui_tick_task, "eez_tick", 8192, NULL, 5, NULL);

@@ -13,10 +13,12 @@ static const char *TAG = "rtc";
 
 #define NVS_NAMESPACE    "rtc"
 #define NVS_KEY_EPOCH    "epoch"
+#define NVS_KEY_FORMAT   "fmt"
 #define NVS_SAVE_INTERVAL_S 60
 
 static char time_str_buf[12];
 static TimerHandle_t save_timer = NULL;
+static uint8_t time_format = RTC_FORMAT_12H;
 
 static void nvs_save_epoch(void)
 {
@@ -41,6 +43,25 @@ static time_t nvs_load_epoch(void)
     return (time_t)val;
 }
 
+static void nvs_save_format(void)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_set_u8(h, NVS_KEY_FORMAT, time_format);
+        nvs_commit(h);
+        nvs_close(h);
+    }
+}
+
+static void nvs_load_format(void)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &h) == ESP_OK) {
+        nvs_get_u8(h, NVS_KEY_FORMAT, &time_format);
+        nvs_close(h);
+    }
+}
+
 static void save_timer_cb(TimerHandle_t timer)
 {
     nvs_save_epoch();
@@ -48,6 +69,8 @@ static void save_timer_cb(TimerHandle_t timer)
 
 esp_err_t rtc_clock_init(void)
 {
+    nvs_load_format();
+
     time_t saved = nvs_load_epoch();
     if (saved > 0) {
         struct timeval tv = { .tv_sec = saved, .tv_usec = 0 };
@@ -65,7 +88,8 @@ esp_err_t rtc_clock_init(void)
         xTimerStart(save_timer, 0);
     }
 
-    ESP_LOGI(TAG, "RTC clock ready (32.768 kHz XTAL, NVS backup every %ds)", NVS_SAVE_INTERVAL_S);
+    ESP_LOGI(TAG, "RTC clock ready (32.768 kHz XTAL, format=%s, NVS backup every %ds)",
+             time_format == RTC_FORMAT_24H ? "24h" : "12h", NVS_SAVE_INTERVAL_S);
     return ESP_OK;
 }
 
@@ -101,10 +125,15 @@ const char *rtc_clock_get_time_str(void)
 {
     struct tm t;
     get_localtime(&t);
-    int hour12 = t.tm_hour % 12;
-    if (hour12 == 0) hour12 = 12;
-    const char *ampm = (t.tm_hour < 12) ? "AM" : "PM";
-    snprintf(time_str_buf, sizeof(time_str_buf), "%d:%02d %s", hour12, t.tm_min, ampm);
+
+    if (time_format == RTC_FORMAT_24H) {
+        snprintf(time_str_buf, sizeof(time_str_buf), "%02d:%02d", t.tm_hour, t.tm_min);
+    } else {
+        int hour12 = t.tm_hour % 12;
+        if (hour12 == 0) hour12 = 12;
+        const char *ampm = (t.tm_hour < 12) ? "am" : "pm";
+        snprintf(time_str_buf, sizeof(time_str_buf), "%d:%02d %s", hour12, t.tm_min, ampm);
+    }
     return time_str_buf;
 }
 
@@ -130,4 +159,16 @@ void rtc_clock_set_time(uint8_t hours, uint8_t minutes, uint8_t seconds)
     nvs_save_epoch();
 
     ESP_LOGI(TAG, "Time set to %02d:%02d:%02d", hours, minutes, seconds);
+}
+
+void rtc_clock_set_format(uint8_t format)
+{
+    time_format = (format == RTC_FORMAT_24H) ? RTC_FORMAT_24H : RTC_FORMAT_12H;
+    nvs_save_format();
+    ESP_LOGI(TAG, "Time format set to %s", time_format == RTC_FORMAT_24H ? "24h" : "12h am/pm");
+}
+
+uint8_t rtc_clock_get_format(void)
+{
+    return time_format;
 }

@@ -28,7 +28,8 @@ idf_component_register(
         "main.c"                  # Main application (display, touch, app_main)
         "beep.c"                  # Audio beep module (I2S + MAX98357A)
         "rtc_clock.c"             # RTC clock module (32.768 kHz XTAL + NVS)
-        "oven_timer.c"            # Countdown timers (2 independent, triggers action on expiry)
+        "oven_timer.c"            # Countdown timers, delayed start, cooking time
+        "prizer_bus.c"            # Prizer bus UART communication (ported from XMC1402)
         "actions_impl.c"          # EEZ user action implementations
         "vars_impl.c"             # EEZ native variable implementations
         ${EEZ_UI_SOURCES}         # All EEZ Studio generated UI files (inc. eez-flow.cpp)
@@ -45,6 +46,7 @@ idf_component_register(
         esp_lcd                   # ESP LCD driver framework
         driver                    # ESP-IDF hardware drivers
         esp_driver_i2s            # I2S driver for MAX98357A audio
+        esp_driver_uart           # UART driver for Prizer bus communication
         spi_flash                 # SPI flash access
         nvs_flash                 # Non-volatile storage (volume persistence)
 )
