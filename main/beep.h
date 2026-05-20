@@ -10,6 +10,7 @@ extern "C" {
 
 #define BEEP_SOUND_1    0
 #define BEEP_SOUND_2    1
+#define BEEP_SOUND_3    2
 
 esp_err_t beep_init(void);
 void beep_play(uint8_t sound_id);

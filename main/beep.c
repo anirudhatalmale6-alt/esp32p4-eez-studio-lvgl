@@ -20,6 +20,8 @@ extern const uint8_t beep1_wav_start[] asm("_binary_beep1_wav_start");
 extern const uint8_t beep1_wav_end[]   asm("_binary_beep1_wav_end");
 extern const uint8_t beep2_wav_start[] asm("_binary_beep2_wav_start");
 extern const uint8_t beep2_wav_end[]   asm("_binary_beep2_wav_end");
+extern const uint8_t beep3_wav_start[] asm("_binary_beep3_wav_start");
+extern const uint8_t beep3_wav_end[]   asm("_binary_beep3_wav_end");
 
 typedef struct {
     uint32_t sample_rate;
@@ -32,7 +34,7 @@ typedef struct {
 static i2s_chan_handle_t tx_handle = NULL;
 static QueueHandle_t beep_queue = NULL;
 static volatile uint8_t volume_level = 80;
-static wav_info_t wav_sounds[2];
+static wav_info_t wav_sounds[3];
 static bool i2s_running = false;
 
 #define NVS_NAMESPACE "beep"
@@ -222,7 +224,7 @@ static void beep_task(void *arg)
             // Drain any queued duplicates so we don't repeat
             while (xQueueReceive(beep_queue, &sound_id, 0) == pdTRUE) {}
 
-            if (sound_id < 2 && wav_sounds[sound_id].data != NULL) {
+            if (sound_id < 3 && wav_sounds[sound_id].data != NULL) {
                 play_wav(&wav_sounds[sound_id]);
             }
         }
@@ -251,6 +253,15 @@ esp_err_t beep_init(void)
              (unsigned long)wav_sounds[1].sample_rate, wav_sounds[1].bits_per_sample,
              (unsigned long)wav_sounds[1].data_size);
 
+    ret = wav_parse(beep3_wav_start, beep3_wav_end - beep3_wav_start, &wav_sounds[2]);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to parse beep3.wav");
+        return ret;
+    }
+    ESP_LOGI(TAG, "beep3: %lu Hz, %d-bit, %lu bytes",
+             (unsigned long)wav_sounds[2].sample_rate, wav_sounds[2].bits_per_sample,
+             (unsigned long)wav_sounds[2].data_size);
+
     ret = i2s_init(wav_sounds[0].sample_rate);
     if (ret != ESP_OK) return ret;
 
@@ -268,7 +279,7 @@ esp_err_t beep_init(void)
 
 void beep_play(uint8_t sound_id)
 {
-    if (beep_queue && sound_id < 2) {
+    if (beep_queue && sound_id < 3) {
         xQueueSend(beep_queue, &sound_id, 0);
     }
 }

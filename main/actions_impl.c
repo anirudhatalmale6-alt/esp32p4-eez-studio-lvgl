@@ -13,6 +13,11 @@ void action_beep2(lv_event_t *e) {
     beep_play(BEEP_SOUND_2);
 }
 
+void action_beep3(lv_event_t *e) {
+    (void)e;
+    beep_play(BEEP_SOUND_3);
+}
+
 void action_set_time(lv_event_t *e) {
     (void)e;
     rtc_clock_set_time(
