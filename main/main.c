@@ -47,7 +47,7 @@ static const char *TAG = "jd9365_app";
 #define PANEL_MIPI_DSI_LCD_VBP     14
 #define PANEL_MIPI_DSI_LCD_VFP     22
 
-#define BSP_LCD_DRAW_BUFF_SIZE  (800 * 320)
+#define BSP_LCD_DRAW_BUFF_SIZE  (800 * 1280)
 #define BSP_LCD_DRAW_BUFF_DOUBLE 1
 
 // Display settings
@@ -505,10 +505,10 @@ lv_disp_t *bsp_display_start(void)
 {
     lv_disp_t *disp = NULL;
     const lvgl_port_cfg_t lvgl_cfg = {
-        .task_priority = 4,
+        .task_priority = 10,
         .task_stack = 14336,
-        .task_affinity = 1,
-        .task_max_sleep_ms = 100,
+        .task_affinity = -1,
+        .task_max_sleep_ms = 500,
         .timer_period_ms = 10,
     };
     lvgl_port_init(&lvgl_cfg);
