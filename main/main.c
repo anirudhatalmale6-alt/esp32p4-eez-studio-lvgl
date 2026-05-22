@@ -561,9 +561,33 @@ static void on_oven_event(oven_event_t event)
     }
 }
 
-static void on_prizer_rx_cmd(const char *cmd, uint16_t data1, uint16_t data2)
+// --- Prizer VPB frame processing (ported from uart_received_commands_handler) ---
+static uint8_t sabbath_active = 0;
+static uint8_t flag_config_match_error = 0;
+#define ID_CONFIGURATION  0x02
+
+static void on_prizer_rx_cmd(const prizer_frame_in_t *frame)
 {
-    ESP_LOGD(TAG, "Prizer RX: cmd=%s d1=%u d2=%u", cmd, data1, data2);
+    ESP_LOGD(TAG, "Prizer RX: id=%s cfg=%u cmd=%s d1=%u d2=%u",
+             frame->id, frame->id_cfg, frame->cmd, frame->data1, frame->data2);
+
+    if (strcmp(frame->id, "VPB") == 0) {
+        if (strcmp(frame->cmd, "MODESB") == 0) {
+            sabbath_active = (frame->data1 != 0) ? 1 : 0;
+            ESP_LOGI(TAG, "Sabbath mode: %s", sabbath_active ? "ON" : "OFF");
+        }
+
+        flag_config_match_error = 1;
+        if ((frame->id_cfg == 0x01) && (ID_CONFIGURATION == 0x02 || ID_CONFIGURATION == 0x05))
+            flag_config_match_error = 0;
+        if ((frame->id_cfg == 0x02) && (ID_CONFIGURATION == 0x03 || ID_CONFIGURATION == 0x06))
+            flag_config_match_error = 0;
+
+        if (flag_config_match_error) {
+            ESP_LOGW(TAG, "Config mismatch: frame.id_cfg=0x%02X vs ID_CONFIGURATION=0x%02X",
+                     frame->id_cfg, ID_CONFIGURATION);
+        }
+    }
 }
 
 void app_main(void)

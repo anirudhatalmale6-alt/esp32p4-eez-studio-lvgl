@@ -22,8 +22,8 @@ typedef struct {
     uint8_t  valid;
 } prizer_frame_in_t;
 
-// Callback for received commands (called from UART task context)
-typedef void (*prizer_rx_cmd_cb_t)(const char *cmd, uint16_t data1, uint16_t data2);
+// Callback receives the full parsed frame after CRC validation
+typedef void (*prizer_rx_cmd_cb_t)(const prizer_frame_in_t *frame);
 
 esp_err_t prizer_bus_init(prizer_rx_cmd_cb_t on_rx_cmd);
 

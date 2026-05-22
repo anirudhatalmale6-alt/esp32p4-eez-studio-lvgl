@@ -11,6 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
+#include "freertos/semphr.h"
 #include "esp_log.h"
 
 static const char *TAG = "prizer";
@@ -22,7 +23,7 @@ static const char *TAG = "prizer";
 #define PRIZER_BAUD           256000
 #define PRIZER_FRAME_SIZE     32
 #define PRIZER_RX_BUF_SIZE    256
-#define PRIZER_TX_BUF_SIZE    0
+#define PRIZER_TX_BUF_SIZE    256
 
 // --- Protocol constants ---
 #define ID_PPSW_REV           1
@@ -52,6 +53,8 @@ static uint8_t  flag_active = 0;
 static uint8_t  frame_index_tx = 0;
 
 static prizer_rx_cmd_cb_t rx_cmd_cb = NULL;
+static TaskHandle_t tx_task_handle = NULL;
+static SemaphoreHandle_t tx_mutex = NULL;
 
 // ========================= CRC-8 =========================
 
@@ -247,12 +250,11 @@ static uint16_t get_command_data(const char *cmd, int field)
     return 0;
 }
 
-// ========================= TX FRAME SEND =========================
+// ========================= TX (mutex-protected) =========================
 
 static void send_frame(const uint8_t *data, uint8_t len)
 {
     uart_write_bytes(PRIZER_UART_NUM, data, PRIZER_FRAME_SIZE);
-    uart_wait_tx_done(PRIZER_UART_NUM, pdMS_TO_TICKS(20));
 }
 
 static void send_device_frames(void)
@@ -273,7 +275,24 @@ static void send_device_frames(void)
     send_frame(uart_tx_data, PRIZER_FRAME_SIZE);
 }
 
+// ========================= TX TASK =========================
+// Handles inactivity-triggered frame sends without blocking the timer daemon
+
+static void prizer_tx_task(void *arg)
+{
+    while (1) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        xSemaphoreTake(tx_mutex, portMAX_DELAY);
+        uart_flush_input(PRIZER_UART_NUM);
+        frame_index_tx = 0;
+        send_device_frames();
+        xSemaphoreGive(tx_mutex);
+    }
+}
+
 // ========================= ACTIVITY CHECK (20ms) =========================
+// Runs in FreeRTOS timer daemon context — must NEVER block
 
 static void activity_timer_cb(TimerHandle_t timer)
 {
@@ -289,10 +308,9 @@ static void activity_timer_cb(TimerHandle_t timer)
             device_num = 1;
         }
 
-        uart_flush_input(PRIZER_UART_NUM);
-
-        frame_index_tx = 0;
-        send_device_frames();
+        if (tx_task_handle) {
+            xTaskNotifyGive(tx_task_handle);
+        }
     }
 }
 
@@ -317,14 +335,16 @@ static void prizer_rx_task(void *arg)
             flag_active = 1;
 
             if (rx_cmd_cb) {
-                rx_cmd_cb(frame.cmd, frame.data1, frame.data2);
+                rx_cmd_cb(&frame);
             }
 
+            xSemaphoreTake(tx_mutex, portMAX_DELAY);
             if (strcmp(frame.cmd, "END@FR") != 0) {
                 send_frame(rx_buf, PRIZER_FRAME_SIZE);
             } else {
                 send_device_frames();
             }
+            xSemaphoreGive(tx_mutex);
         }
     }
 }
@@ -334,6 +354,8 @@ static void prizer_rx_task(void *arg)
 esp_err_t prizer_bus_init(prizer_rx_cmd_cb_t on_rx_cmd)
 {
     rx_cmd_cb = on_rx_cmd;
+
+    tx_mutex = xSemaphoreCreateMutex();
 
     uart_config_t uart_config = {
         .baud_rate  = PRIZER_BAUD,
@@ -349,11 +371,14 @@ esp_err_t prizer_bus_init(prizer_rx_cmd_cb_t on_rx_cmd)
     ESP_ERROR_CHECK(uart_set_pin(PRIZER_UART_NUM, PRIZER_TX_PIN, PRIZER_RX_PIN,
                                   UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
+    gpio_set_pull_mode(PRIZER_RX_PIN, GPIO_PULLUP_ONLY);
+
     TimerHandle_t act_timer = xTimerCreate("prizer_act", pdMS_TO_TICKS(20),
                                             pdTRUE, NULL, activity_timer_cb);
     if (act_timer) xTimerStart(act_timer, 0);
 
-    xTaskCreate(prizer_rx_task, "prizer_rx", 4096, NULL, 10, NULL);
+    xTaskCreate(prizer_tx_task, "prizer_tx", 4096, NULL, 3, &tx_task_handle);
+    xTaskCreate(prizer_rx_task, "prizer_rx", 4096, NULL, 3, NULL);
 
     ESP_LOGI(TAG, "Prizer bus ready (UART%d TX=GPIO%d RX=GPIO%d %d baud)",
              PRIZER_UART_NUM, PRIZER_TX_PIN, PRIZER_RX_PIN, PRIZER_BAUD);
