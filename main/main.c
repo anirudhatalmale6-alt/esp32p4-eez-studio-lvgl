@@ -47,7 +47,7 @@ static const char *TAG = "jd9365_app";
 #define PANEL_MIPI_DSI_LCD_VBP     14
 #define PANEL_MIPI_DSI_LCD_VFP     22
 
-#define BSP_LCD_DRAW_BUFF_SIZE  800*1280//400*640
+#define BSP_LCD_DRAW_BUFF_SIZE  (800 * 100)
 #define BSP_LCD_DRAW_BUFF_DOUBLE 1
 
 // Display settings
@@ -533,9 +533,6 @@ static void eez_ui_tick_task(void *arg)
             lvgl_port_unlock();
         }
         vTaskDelay(pdMS_TO_TICKS(10));
-    
-    set_backlight_brightness(0); 
-       
     }
 }
 
