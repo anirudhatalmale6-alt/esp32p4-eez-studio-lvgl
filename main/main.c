@@ -47,7 +47,7 @@ static const char *TAG = "jd9365_app";
 #define PANEL_MIPI_DSI_LCD_VBP     14
 #define PANEL_MIPI_DSI_LCD_VFP     22
 
-#define BSP_LCD_DRAW_BUFF_SIZE  (800 * 100)
+#define BSP_LCD_DRAW_BUFF_SIZE  (800 * 320)
 #define BSP_LCD_DRAW_BUFF_DOUBLE 1
 
 // Display settings
@@ -505,11 +505,11 @@ lv_disp_t *bsp_display_start(void)
 {
     lv_disp_t *disp = NULL;
     const lvgl_port_cfg_t lvgl_cfg = {
-        .task_priority = 10,
+        .task_priority = 4,
         .task_stack = 14336,
-        .task_affinity = -1,
-        .task_max_sleep_ms = 30,
-        .timer_period_ms = 5,
+        .task_affinity = 1,
+        .task_max_sleep_ms = 100,
+        .timer_period_ms = 10,
     };
     lvgl_port_init(&lvgl_cfg);
     disp = bsp_display_lcd_init();
@@ -527,12 +527,11 @@ lv_disp_t *bsp_display_start(void)
 static void eez_ui_tick_task(void *arg)
 {
     while (1) {
-        // Lock LVGL before calling EEZ tick (thread safety)
-        if (lvgl_port_lock(100)) {
+        if (lvgl_port_lock(500)) {
             ui_tick();
             lvgl_port_unlock();
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
