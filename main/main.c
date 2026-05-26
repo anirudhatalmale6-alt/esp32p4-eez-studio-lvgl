@@ -375,7 +375,7 @@ static esp_err_t init_lcd(void)
                 .vsync_front_porch = PANEL_MIPI_DSI_LCD_VFP,
             },
         .flags.use_dma2d = true,
-        .num_fbs = 1,
+        .num_fbs = 2,
     };
 #endif
     jd9365_vendor_config_t vendor_config = {
