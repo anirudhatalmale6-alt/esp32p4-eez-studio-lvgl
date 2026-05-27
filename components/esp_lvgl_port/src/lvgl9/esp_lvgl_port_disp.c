@@ -716,13 +716,12 @@ static void lvgl_port_flush_callback(lv_display_t *drv, const lv_area_t *area, u
     }
 
     if ((disp_ctx->disp_type == LVGL_PORT_DISP_TYPE_RGB || disp_ctx->disp_type == LVGL_PORT_DISP_TYPE_DSI)
-            && (disp_ctx->flags.direct_mode || disp_ctx->flags.full_refresh)) {
+            && (disp_ctx->flags.direct_mode || disp_ctx->flags.full_refresh)
+            && disp_ctx->trans_sem) {
         if (lv_disp_flush_is_last(drv)) {
-            /* Use physical resolution for draw_bitmap (handles sw_rotate correctly) */
             int32_t draw_h = lv_display_get_physical_horizontal_resolution(drv);
             int32_t draw_v = lv_display_get_physical_vertical_resolution(drv);
             esp_lcd_panel_draw_bitmap(disp_ctx->panel_handle, 0, 0, draw_h, draw_v, color_map);
-            /* Waiting for the last frame buffer to complete transmission */
             xSemaphoreTake(disp_ctx->trans_sem, 0);
             xSemaphoreTake(disp_ctx->trans_sem, portMAX_DELAY);
         }
@@ -731,7 +730,8 @@ static void lvgl_port_flush_callback(lv_display_t *drv, const lv_area_t *area, u
     }
 
     if (disp_ctx->disp_type == LVGL_PORT_DISP_TYPE_RGB || (disp_ctx->disp_type == LVGL_PORT_DISP_TYPE_DSI
-            && (disp_ctx->flags.direct_mode || disp_ctx->flags.full_refresh))) {
+            && (disp_ctx->flags.direct_mode || disp_ctx->flags.full_refresh)
+            && disp_ctx->trans_sem)) {
         lv_disp_flush_ready(drv);
     }
 }

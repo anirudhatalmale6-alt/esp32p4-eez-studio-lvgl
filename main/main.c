@@ -486,7 +486,7 @@ static lv_disp_t *bsp_display_lcd_init(void)
 
     const lvgl_port_display_dsi_cfg_t dsi_cfg = {
         .flags = {
-            .avoid_tearing = true,
+            .avoid_tearing = false,
         }
     };
 
