@@ -481,11 +481,12 @@ static lv_disp_t *bsp_display_lcd_init(void)
             .buff_dma = 0,
             .sw_rotate = 1,
             .buff_spiram = 1,
+            .full_refresh = 1,
         }};
 
     const lvgl_port_display_dsi_cfg_t dsi_cfg = {
         .flags = {
-            .avoid_tearing = false,
+            .avoid_tearing = true,
         }
     };
 
