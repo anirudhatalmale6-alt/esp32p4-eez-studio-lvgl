@@ -9,7 +9,7 @@
 
 static const char *TAG = "backlight";
 
-#define BL_GPIO          GPIO_NUM_27
+#define BL_GPIO          GPIO_NUM_23
 #define BL_LEDC_TIMER    LEDC_TIMER_0
 #define BL_LEDC_MODE     LEDC_LOW_SPEED_MODE
 #define BL_LEDC_CHANNEL  LEDC_CHANNEL_0
@@ -57,7 +57,7 @@ static uint8_t nvs_load_brightness(uint8_t default_val)
 
 static void apply_duty(uint8_t pct)
 {
-    uint32_t duty = (uint32_t)pct * 1023 / 100;
+    uint32_t duty = 1023 - (uint32_t)pct * 1023 / 100;
     ledc_set_duty(BL_LEDC_MODE, BL_LEDC_CHANNEL, duty);
     ledc_update_duty(BL_LEDC_MODE, BL_LEDC_CHANNEL);
 }
@@ -80,7 +80,7 @@ esp_err_t backlight_init(void)
         .speed_mode = BL_LEDC_MODE,
         .channel = BL_LEDC_CHANNEL,
         .timer_sel = BL_LEDC_TIMER,
-        .duty = (uint32_t)brightness_pct * 1023 / 100,
+        .duty = 1023 - (uint32_t)brightness_pct * 1023 / 100,
         .hpoint = 0,
     };
     ESP_ERROR_CHECK(ledc_channel_config(&chan_cfg));
