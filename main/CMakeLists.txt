@@ -27,6 +27,7 @@ idf_component_register(
     SRCS
         "main.c"                  # Main application (display, touch, app_main)
         "beep.c"                  # Audio beep module (I2S + MAX98357A)
+        "backlight.c"             # Display backlight PWM + NVS persistence
         "rtc_clock.c"             # RTC clock module (32.768 kHz XTAL + NVS)
         "oven_timer.c"            # Countdown timers, delayed start, cooking time
         "prizer_bus.c"            # Prizer bus UART communication (ported from XMC1402)

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "beep.h"
+#include "backlight.h"
 #include "rtc_clock.h"
 #include "oven_timer.h"
 #include "prizer_bus.h"
@@ -10,6 +11,14 @@ void set_var_beep_volume(int32_t value) {
     if (value < 0) value = 0;
     if (value > 100) value = 100;
     beep_set_volume((uint8_t)value);
+}
+
+// === backlight_brightness (integer, read/write, 0-100%) ===
+int32_t get_var_backlight_brightness(void) { return (int32_t)backlight_get_brightness(); }
+void set_var_backlight_brightness(int32_t value) {
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+    backlight_set_brightness((uint8_t)value);
 }
 
 // === rtc_hours (integer, read/write) ===

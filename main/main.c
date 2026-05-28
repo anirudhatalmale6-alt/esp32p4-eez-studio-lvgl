@@ -29,6 +29,7 @@
 // EEZ Studio generated UI (from main/eez_ui/)
 #include "ui.h"
 #include "beep.h"
+#include "backlight.h"
 #include "rtc_clock.h"
 #include "oven_timer.h"
 #include "prizer_bus.h"
@@ -53,16 +54,9 @@ static const char *TAG = "jd9365_app";
 // Display settings
 #define LCD_BIT_PER_PIXEL       (16)
 #define PIN_LCD_RST             (37)
-#define PIN_BK_LIGHT            (23)
 #define MIPI_DSI_LANE_NUM       (2)
 #define MIPI_DSI_PHY_LDO_CHAN   (3)
 #define MIPI_DSI_PHY_LDO_MV    (2500)
-
-#define BK_LIGHT_LEDC_TIMER     LEDC_TIMER_0
-#define BK_LIGHT_LEDC_MODE      LEDC_LOW_SPEED_MODE
-#define BK_LIGHT_LEDC_CHANNEL   LEDC_CHANNEL_0
-#define BK_LIGHT_LEDC_FREQ_HZ   (5000)
-#define BK_LIGHT_LEDC_RES       LEDC_TIMER_10_BIT
 
 // Touch settings
 #define TOUCH_I2C_NUM           (0)
@@ -314,31 +308,6 @@ static esp_lcd_panel_io_handle_t mipi_dbi_io = NULL;
 
 static esp_err_t init_lcd(void)
 {
-#if PIN_BK_LIGHT >= 0
-    ESP_LOGI(TAG, "Backlight PWM init");
-
-    // Configure LEDC timer for PWM
-    ledc_timer_config_t ledc_timer = {
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .timer_num = LEDC_TIMER_0,
-        .duty_resolution = LEDC_TIMER_10_BIT,
-        .freq_hz = 5000,
-        .clk_cfg = LEDC_AUTO_CLK,
-    };
-    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
-
-    // Configure LEDC channel connected to the backlight GPIO
-    ledc_channel_config_t ledc_channel = {
-        .gpio_num = PIN_BK_LIGHT,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .channel = LEDC_CHANNEL_0,
-        .timer_sel = LEDC_TIMER_0,
-        .duty = 800,   // initial brightness (~78%)
-        .hpoint = 0,
-    };
-    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
-#endif
-
     ESP_LOGI(TAG, "MIPI DSI PHY power on (LDO)");
     esp_ldo_channel_config_t ldo_cfg = {
         .chan_id = MIPI_DSI_PHY_LDO_CHAN,
@@ -398,16 +367,6 @@ static esp_err_t init_lcd(void)
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
 
     return ESP_OK;
-}
-
-// Set backlight brightness (0-1023 for 10-bit resolution)
-static void set_backlight_brightness(uint16_t brightness)
-{
-#if PIN_BK_LIGHT >= 0
-    if (brightness > 1023) brightness = 1023; // clamp to 10-bit max
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, brightness);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
-#endif
 }
 
 static esp_err_t app_touch_init(void)
@@ -481,9 +440,9 @@ static lv_disp_t *bsp_display_lcd_init(void)
             .buff_dma = 0,
             .sw_rotate = 1,
             .buff_spiram = 1,
-            .full_refresh = 1,
+            //.full_refresh = 1,
         }};
-
+ 
     const lvgl_port_display_dsi_cfg_t dsi_cfg = {
         .flags = {
             .avoid_tearing = false,
@@ -598,6 +557,8 @@ void app_main(void)
         nvs_flash_erase();
         nvs_flash_init();
     }
+
+    backlight_init();
 
     bsp_display_start();
 
