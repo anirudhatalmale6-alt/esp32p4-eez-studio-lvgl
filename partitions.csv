@@ -1,5 +1,5 @@
-# Name,   Type, SubType, Offset,  Size,    Flags
-# No OTA - single factory app, maximized for 16MB flash
-nvs,      data, nvs,     0x9000,  0x6000,
-factory,  app,  factory, 0x10000, 0xFE0000,
-coredump, data, coredump,0xFF0000,0x10000,
+# Name,   Type, SubType, Offset,   Size,     Flags
+# No OTA - single factory app, maximized for 32MB flash
+nvs,      data, nvs,     0x9000,   0x6000,
+factory,  app,  factory, 0x10000,  0x1FE0000,
+coredump, data, coredump,0x1FF0000,0x10000,
