@@ -419,8 +419,6 @@ static lv_disp_t *bsp_display_lcd_init(void)
         return NULL;
     }
 
-    esp_lcd_panel_disp_on_off(panel_handle, true);
-
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle = mipi_dbi_io,
         .panel_handle = panel_handle,
@@ -558,8 +556,6 @@ void app_main(void)
         nvs_flash_init();
     }
 
-    backlight_init();
-
     bsp_display_start();
 
     // Initialize EEZ Studio generated UI
@@ -568,6 +564,11 @@ void app_main(void)
         ui_init();
         lvgl_port_unlock();
     }
+
+    // Let LVGL render the first frame before turning on the display + backlight
+    vTaskDelay(pdMS_TO_TICKS(100));
+    esp_lcd_panel_disp_on_off(panel_handle, true);
+    backlight_init();
 
     // Initialize audio beep module (I2S + MAX98357A)
     esp_err_t beep_ret = beep_init();
