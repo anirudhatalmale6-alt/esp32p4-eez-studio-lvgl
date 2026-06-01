@@ -316,12 +316,7 @@ static esp_err_t init_lcd(void)
     ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_cfg, &ldo_mipi_phy));
 
     ESP_LOGI(TAG, "Init MIPI DSI bus");
-    esp_lcd_dsi_bus_config_t bus_config = {
-        .bus_id = 0,
-        .num_data_lanes = 2,
-        .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
-        .lane_bit_rate_mbps = 1000,
-    };
+    esp_lcd_dsi_bus_config_t bus_config = JD9365_PANEL_BUS_DSI_2CH_CONFIG();
     ESP_ERROR_CHECK(esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus));
 
     ESP_LOGI(TAG, "Install Panel IO (DBI)");
