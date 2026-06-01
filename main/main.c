@@ -298,7 +298,7 @@ static const jd9365_lcd_init_cmd_t lcd_init_cmds_ch700wx09a[] = {
     {0xE0, (uint8_t[]){0x00}, 1, 0},
 
     {0x11, (uint8_t[]){0x00}, 1, 120},  // Sleep Out + 120ms
-    {0x29, (uint8_t[]){0x00}, 1, 5},    // Display On + 5ms
+    // 0x29 (Display On) is NOT here — sent later after LVGL renders the first frame
 };
 
 static esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
@@ -617,6 +617,14 @@ static void on_prizer_rx_cmd(const prizer_frame_in_t *frame)
 
 void app_main(void)
 {
+    // Drive backlight GPIO HIGH immediately to keep backlight at minimum during boot
+    gpio_config_t bl_gpio_cfg = {
+        .pin_bit_mask = (1ULL << GPIO_NUM_23),
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    gpio_config(&bl_gpio_cfg);
+    gpio_set_level(GPIO_NUM_23, 1);
+
     ESP_LOGI(TAG, "ESP32-P4 + EEZ Studio LVGL Flow Demo");
     ESP_LOGI(TAG, "Display: JD9365 800x1280, 60Hz, MIPI DSI 2-lane");
 
