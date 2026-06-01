@@ -369,6 +369,74 @@ static esp_err_t init_lcd(void)
     return ESP_OK;
 }
 
+static void gt911_configure_filters(void)
+{
+    // GT911 config registers: 0x8047 to 0x80FE (184 bytes)
+    uint8_t config[184];
+
+    esp_err_t ret = esp_lcd_panel_io_rx_param(tp_io_handle, 0x8047, config, sizeof(config));
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "GT911 config read failed: %s (touch will use defaults)", esp_err_to_name(ret));
+        return;
+    }
+
+    ESP_LOGI(TAG, "GT911 config v%d: touch_num=%d, touch_level=%d, leave_level=%d, filter=%d",
+             config[0], config[5] & 0x0F, config[12], config[13], config[9]);
+
+    // Offset 5 (reg 0x804C bits 0-3): max simultaneous touch points
+    config[5] = (config[5] & 0xF0) | 0x01;
+
+    // Offset 12 (reg 0x8053): touch detection threshold
+    // Default is ~40-60. Higher = less sensitive to weak/diffuse touches (water, cloth).
+    config[12] = 90;
+
+    // Offset 13 (reg 0x8054): touch release threshold (should be < touch threshold)
+    config[13] = 70;
+
+    // Offset 9 (reg 0x8050): noise filter coefficient (0-15, higher = more filtering)
+    if (config[9] < 8) config[9] = 8;
+
+    // Offset 10 (reg 0x8051): large touch suppress threshold
+    config[10] = 30;
+
+    // Increment config version so GT911 accepts the update
+    config[0]++;
+
+    // Checksum: two's complement of the sum of all config bytes
+    uint16_t sum = 0;
+    for (int i = 0; i < (int)sizeof(config); i++) {
+        sum += config[i];
+    }
+    uint8_t checksum = (~(uint8_t)(sum & 0xFF)) + 1;
+
+    // Write modified config
+    ret = esp_lcd_panel_io_tx_param(tp_io_handle, 0x8047, config, sizeof(config));
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "GT911 config write failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    // Write checksum to 0x80FF
+    ret = esp_lcd_panel_io_tx_param(tp_io_handle, 0x80FF, &checksum, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "GT911 checksum write failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    // Write config fresh flag to apply
+    uint8_t fresh = 0x01;
+    ret = esp_lcd_panel_io_tx_param(tp_io_handle, 0x8100, &fresh, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "GT911 config apply failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    ESP_LOGI(TAG, "GT911 configured: 1 touch point, threshold=%d/%d, filter=%d, large_touch=%d",
+             config[12], config[13], config[9], config[10]);
+}
+
 static esp_err_t app_touch_init(void)
 {
     // Initialize I2C
@@ -406,6 +474,9 @@ static esp_err_t app_touch_init(void)
     tp_io_config.scl_speed_hz = TOUCH_I2C_CLK_HZ;
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(i2c_handle, &tp_io_config, &tp_io_handle));
     ESP_ERROR_CHECK(esp_lcd_touch_new_i2c_gt911(tp_io_handle, &tp_cfg, &touch_handle));
+
+    // Configure GT911 touch filtering to prevent blink from wet/large-area touches
+    gt911_configure_filters();
 
     return ESP_OK;
 }
