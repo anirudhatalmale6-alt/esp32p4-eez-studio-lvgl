@@ -37,16 +37,16 @@
 
 static const char *TAG = "jd9365_app";
 
-// Resolution and parameters: 800x1280, 24bpp RGB888, 2 lane DSI
-#define PANEL_MIPI_DSI_DPI_CLK_MHZ 60
+// Resolution and parameters: 800x1280, 16bpp RGB565, 2 lane DSI, ~49.6 Hz
+#define PANEL_MIPI_DSI_DPI_CLK_MHZ 65
 #define PANEL_MIPI_DSI_LCD_H_RES   800
 #define PANEL_MIPI_DSI_LCD_V_RES   1280
 #define PANEL_MIPI_DSI_LCD_HSYNC   20
-#define PANEL_MIPI_DSI_LCD_HBP     20
-#define PANEL_MIPI_DSI_LCD_HFP     20
-#define PANEL_MIPI_DSI_LCD_VSYNC   2
-#define PANEL_MIPI_DSI_LCD_VBP     14
-#define PANEL_MIPI_DSI_LCD_VFP     22
+#define PANEL_MIPI_DSI_LCD_HBP     80
+#define PANEL_MIPI_DSI_LCD_HFP     80
+#define PANEL_MIPI_DSI_LCD_VSYNC   6
+#define PANEL_MIPI_DSI_LCD_VBP     20
+#define PANEL_MIPI_DSI_LCD_VFP     30
 
 #define BSP_LCD_DRAW_BUFF_SIZE  (800 * 1280)
 #define BSP_LCD_DRAW_BUFF_DOUBLE 1
@@ -56,7 +56,7 @@ static const char *TAG = "jd9365_app";
 #define PIN_LCD_RST             (37)
 #define MIPI_DSI_LANE_NUM       (2)
 #define MIPI_DSI_PHY_LDO_CHAN   (3)
-#define MIPI_DSI_PHY_LDO_MV    (2500)
+#define MIPI_DSI_PHY_LDO_MV    (2700)
 
 // Touch settings
 #define TOUCH_I2C_NUM           (0)
