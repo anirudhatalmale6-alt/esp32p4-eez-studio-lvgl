@@ -71,12 +71,22 @@ static esp_lcd_panel_io_handle_t tp_io_handle = NULL;
 static esp_lcd_touch_handle_t touch_handle = NULL;
 static lv_indev_t *lvgl_touch_indev = NULL;
 
-#if LCD_BIT_PER_PIXEL == 24
-#define MIPI_DPI_PX_FORMAT      (LCD_COLOR_PIXEL_FORMAT_RGB888)
-#elif LCD_BIT_PER_PIXEL == 18
-#define MIPI_DPI_PX_FORMAT      (LCD_COLOR_PIXEL_FORMAT_RGB666)
-#elif LCD_BIT_PER_PIXEL == 16
-#define MIPI_DPI_PX_FORMAT      (LCD_COLOR_PIXEL_FORMAT_RGB565)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
+    #if LCD_BIT_PER_PIXEL == 24
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_FMT_RGB888
+    #elif LCD_BIT_PER_PIXEL == 18
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_FMT_RGB666
+    #elif LCD_BIT_PER_PIXEL == 16
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_FMT_RGB565
+    #endif
+#else
+    #if LCD_BIT_PER_PIXEL == 24
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_PIXEL_FORMAT_RGB888
+    #elif LCD_BIT_PER_PIXEL == 18
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_PIXEL_FORMAT_RGB666
+    #elif LCD_BIT_PER_PIXEL == 16
+    #define MIPI_DPI_PX_FORMAT  LCD_COLOR_PIXEL_FORMAT_RGB565
+    #endif
 #endif
 
 // CH700WX09A-JD9365DA 800x1280 2 lane custom initialization table
