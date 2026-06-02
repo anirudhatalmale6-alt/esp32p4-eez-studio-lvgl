@@ -562,7 +562,7 @@ lv_disp_t *bsp_display_start(void)
     lv_disp_t *disp = NULL;
     const lvgl_port_cfg_t lvgl_cfg = {
         .task_priority = 10,
-        .task_stack = 32768,
+        .task_stack = 65536,
         .task_affinity = 1,
         .task_max_sleep_ms = 30,
         .timer_period_ms = 5,
