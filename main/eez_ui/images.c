@@ -1,5 +1,26 @@
 #include "images.h"
 
-const ext_img_desc_t images[1] = {
-    0
+const ext_img_desc_t images[22] = {
+    { "oven_light", &img_oven_light },
+    { "metal_BlueStar_logo", &img_metal_blue_star_logo },
+    { "bottom_arrow", &img_bottom_arrow },
+    { "split_screen", &img_split_screen },
+    { "bottom_settings", &img_bottom_settings },
+    { "bottom_BlueStar_logo", &img_bottom_blue_star_logo },
+    { "touch_delete", &img_touch_delete },
+    { "touch_backspace", &img_touch_backspace },
+    { "left_oven_active", &img_left_oven_active },
+    { "left_oven_inactive", &img_left_oven_inactive },
+    { "right_oven_active", &img_right_oven_active },
+    { "right_oven_inactive", &img_right_oven_inactive },
+    { "released__bake", &img_released__bake },
+    { "released__broil", &img_released__broil },
+    { "released__clean", &img_released__clean },
+    { "released__convection", &img_released__convection },
+    { "released__convection_bake", &img_released__convection_bake },
+    { "released__convection_roast", &img_released__convection_roast },
+    { "released__dehydrate", &img_released__dehydrate },
+    { "released__proof", &img_released__proof },
+    { "released__roast", &img_released__roast },
+    { "released__stone", &img_released__stone },
 };

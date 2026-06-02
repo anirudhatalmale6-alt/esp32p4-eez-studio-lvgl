@@ -1,11 +1,17 @@
 #ifndef EEZ_LVGL_UI_FONTS_H
 #define EEZ_LVGL_UI_FONTS_H
 
-#include "lvgl.h"
+#include <lvgl.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const lv_font_t ui_font_arial;
+extern const lv_font_t ui_font_arial_24;
+extern const lv_font_t ui_font_roboto_thin_188;
+extern const lv_font_t ui_font_roboto_bold_40;
+extern const lv_font_t ui_font_helvetica_neue_33;
 
 #ifndef EXT_FONT_DESC_T
 #define EXT_FONT_DESC_T

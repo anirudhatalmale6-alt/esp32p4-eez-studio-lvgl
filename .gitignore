@@ -7,3 +7,7 @@ __pycache__/
 .cache/
 # EEZ UI backups (local only)
 main/eez_ui_backup_*/
+sdkconfig
+sdkconfig.old
+build/
+managed_components/

@@ -325,7 +325,24 @@ static esp_err_t init_lcd(void)
 
     ESP_LOGI(TAG, "Install JD9365 driver");
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
-    esp_lcd_dpi_panel_config_t dpi_config = JD9365_800_1280_PANEL_60HZ_DPI_CONFIG_CF(MIPI_DPI_PX_FORMAT);
+    esp_lcd_dpi_panel_config_t dpi_config = {
+        .virtual_channel = 0,
+        .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
+        .dpi_clock_freq_mhz = PANEL_MIPI_DSI_DPI_CLK_MHZ,
+        .in_color_format = MIPI_DPI_PX_FORMAT,
+        .video_timing =
+            {
+                .h_size = PANEL_MIPI_DSI_LCD_H_RES,
+                .v_size = PANEL_MIPI_DSI_LCD_V_RES,
+                .hsync_back_porch = PANEL_MIPI_DSI_LCD_HBP,
+                .hsync_pulse_width = PANEL_MIPI_DSI_LCD_HSYNC,
+                .hsync_front_porch = PANEL_MIPI_DSI_LCD_HFP,
+                .vsync_back_porch = PANEL_MIPI_DSI_LCD_VBP,
+                .vsync_pulse_width = PANEL_MIPI_DSI_LCD_VSYNC,
+                .vsync_front_porch = PANEL_MIPI_DSI_LCD_VFP,
+            },
+        .num_fbs = 2,
+    };
 #else
     esp_lcd_dpi_panel_config_t dpi_config = {
         .virtual_channel = 0,
