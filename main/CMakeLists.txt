@@ -46,6 +46,7 @@ idf_component_register(
         lvgl                      # LVGL graphics library
         esp_lcd                   # ESP LCD driver framework
         driver                    # ESP-IDF hardware drivers
+        esp_driver_ledc           # LEDC PWM driver (backlight)
         esp_driver_i2s            # I2S driver for MAX98357A audio
         esp_driver_uart           # UART driver for Prizer bus communication
         spi_flash                 # SPI flash access
